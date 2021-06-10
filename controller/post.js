@@ -1,7 +1,9 @@
 const {postServices} = require("../service")
 const { uploadImg } = require("../service/file")
-const {getPageData } = require("../utils")
-
+const {getPageData,getIfIllegal } = require("../utils")
+const {findCommentListByPost} = require("./comment")
+const {getIfCollected} = require("./collection")
+const {findUser} = require("./user")
 
 
 const addPost = async (info)=>{
@@ -22,6 +24,7 @@ const addPost = async (info)=>{
             type,
             img_src,
             date: Date.now(),
+            status: Number(getIfIllegal(content))
         });
     }
     else {
@@ -64,6 +67,94 @@ const findPostList = async (info)=>{
 }
 
 
+
+const getPostList = async (info)=>{
+    const postInfoList = await postServices.findPost(info);
+
+    const res = []
+
+    for (let i = 0; i < postInfoList.length; i++){
+        const {
+            _id,
+            content,
+            type,
+            date,
+            status,
+        } = postInfoList[i]
+
+
+        try {
+            const author = await findUser({_id: author_id})
+            const comments = await getPostComment({
+                post_id: postInfoList[i]._id
+            })
+
+            res.push({
+                _id,
+                author,
+                content,
+                type,
+                date,
+                status,
+                comments
+            })
+
+        }catch (e) {
+        }
+    }
+
+    return res
+}
+
+const getPostListByIdOfUser = async (id)=>{
+    const res = await getPostList({
+        _id: id,
+        status: 0
+    });
+
+    return res[0]
+}
+
+const getPostListOfUser = async (info)=>{
+    const {user_id} = info;
+
+    const postList = await getPostList({
+        status: 0
+    });
+
+    const res = []
+
+    for (let i of postList){
+        const ifCollected = await getIfCollected({
+            user_id,
+            post_id: i._id
+        })
+        const  {
+            _id,
+            author,
+            content,
+            type,
+            date,
+            status,
+            comments
+        } = i;
+
+        res.push({
+            _id,
+            author,
+            content,
+            type,
+            date,
+            status,
+            comments,
+            collected: ifCollected
+        })
+    }
+
+    return res
+}
+
+
 const watchPost = async (info)=>{
     const {id} = info
     const postList = await postServices.findPost({
@@ -80,10 +171,61 @@ const watchPost = async (info)=>{
     }
 }
 
+
+const updatePostStatus = (id,status)=>{
+    if (status){
+        postServices.modifyPost({_id:id},{
+            status,
+        })
+    }else {
+        throw new Error("更新状态失败")
+    }
+}
+
+const getPostComment = async (info)=>{
+    const { post_id} = info
+    const comments = await findCommentListByPost({_id:post_id})
+    const sortedComments = comments.sort((a,b)=>
+         a.date - b.date
+    )
+
+    const res = []
+
+    for (let comment of sortedComments){
+
+        try {
+            const user = await findUser({_id: comment.commenter_id})
+            res.push({
+                name: user.nick_name,
+                content: comment.content
+            })
+        }catch (e){
+
+        }
+
+    }
+
+    return res
+}
+
+// const freezePost = ()=>{
+//
+// }
+
+const defrostPost = (info)=>{
+    const {id} = info
+    updatePostStatus(id,0)
+}
+
+
 module.exports = {
     addPost,
     modifyPost,
     findPostList,
     deletePost,
-    watchPost
+    watchPost,
+    defrostPost,
+    getPostListOfUser,
+    getPostComment,
+    getPostListByIdOfUser
 }

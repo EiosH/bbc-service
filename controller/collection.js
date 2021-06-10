@@ -1,16 +1,16 @@
 const {collectionServices} = require("../service")
-const {getPageData } = require("../utils")
+const {getPostListByIdOfUser} = require("./post")
 
 const addCollection= (info)=>{
     const {
-        postId,
-        userId,
+        post_id,
+        user_id,
     } = info;
 
-    if (postId && userId){
+    if (post_id && user_id){
         collectionServices.addCollection({
-            postId,
-            userId,
+            post_id,
+            user_id,
         })
     }else {
         throw new Error("收藏失败!")
@@ -21,18 +21,44 @@ const deleteCollection= (info)=>{
     if(info._id){
         collectionServices.deleteCollection(info);
     }else {
-        throw new Error("帖子 id 不存在")
+        throw new Error("收藏记录不存在")
     }
 }
 
 const findCollectionList = async (info)=>{
-    const {page,pageList} = info;
-    const data = await collectionServices.findCollection({});
-    return getPageData(data,page,pageList)
+    return  collectionServices.findCollection(info);
+}
+
+const getCollectedPost = async (info)=>{
+    const {user_id} = info
+
+    const mapList = await findCollectionList({
+        user_id
+    })
+
+    const postIdList = mapList.map(v=>v.post_id)
+    const res = []
+
+    for (let id of postIdList){
+        const post  = await getPostListByIdOfUser(id)
+        if(post) res.push(post)
+    }
+    return  res
+}
+
+
+
+const getIfCollected = async (info)=>{
+    const { user_id , post_id} = info
+    return Boolean(collectionServices.findCollection({
+        post_id,
+        user_id,
+    }))
 }
 
 module.exports = {
     addCollection,
     deleteCollection,
-    findCollectionList
+    getCollectedPost,
+    getIfCollected
 }
