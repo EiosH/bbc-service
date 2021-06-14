@@ -18,7 +18,9 @@ var userSchema = new mongoose.Schema({
     avatar: { type:String },
     type: {type: Number, default:0},
     account: { type:String },
-    password: { type:String }
+    password: { type:String },
+    signature_id :{ type:String},
+    freeze: { type:Boolean },
 });
 
 var commentSchema = new mongoose.Schema({

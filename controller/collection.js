@@ -1,7 +1,7 @@
 const {collectionServices} = require("../service")
 const {getPostListByIdOfUser} = require("./post")
 
-const addCollection= (info)=>{
+const addCollection=async (info)=>{
     const {
         post_id,
         user_id,
@@ -18,7 +18,7 @@ const addCollection= (info)=>{
 }
 
 const deleteCollection= (info)=>{
-    if(info._id){
+    if(info.post_id && info.user_id){
         collectionServices.deleteCollection(info);
     }else {
         throw new Error("收藏记录不存在")
@@ -29,8 +29,10 @@ const findCollectionList = async (info)=>{
     return  collectionServices.findCollection(info);
 }
 
+
 const getCollectedPost = async (info)=>{
     const {user_id} = info
+
 
     const mapList = await findCollectionList({
         user_id
@@ -47,18 +49,8 @@ const getCollectedPost = async (info)=>{
 }
 
 
-
-const getIfCollected = async (info)=>{
-    const { user_id , post_id} = info
-    return Boolean(collectionServices.findCollection({
-        post_id,
-        user_id,
-    }))
-}
-
 module.exports = {
     addCollection,
     deleteCollection,
     getCollectedPost,
-    getIfCollected
 }

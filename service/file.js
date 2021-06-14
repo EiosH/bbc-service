@@ -16,13 +16,18 @@ const saveFile = (file, path) => {
     })
 }
 
-const uploadImg = async (file) => {
+const uploadFile = async (file)=>{
     const fileName = Date.now() +"_"+ file.name;
-    const filePath = process.cwd()+ "/public/" + fileName;
-    await saveFile(file.path, filePath);
-    return filePath
+    const filePath =  "/public/" + fileName;
+    await saveFile(file.path, process.cwd() + filePath);
+    return fileName;
+}
+
+const uploadImg = async (file) => {
+    return await uploadFile(file)
 }
 
 module.exports = {
-    uploadImg
+    uploadImg,
+    uploadFile
 };

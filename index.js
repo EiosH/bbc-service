@@ -3,12 +3,14 @@ const path = require('path');
 const koaBody = require('koa-body');
 const app = new Koa();
 const static = require('koa-static')
+const cors = require('koa2-cors');
 
 const staticPath = './public'
 
+app.use(cors());
+
 app.use(koaBody({
     multipart: true, // 允许上传多个文件
-    encoding:'gzip',
     formidable: {
         keepExtensions: true, //  保存图片的扩展名
     }
@@ -28,13 +30,13 @@ app.use(async (ctx,next)=>{
         const data = await next() || "";
 
         ctx.body =  {
-            code:"0",
+            code:0,
             description:"",
             data,
         }
     }catch (e){
         ctx.body =  {
-            code:"1",
+            code:1,
             description:e.toString(),
         }
     }
